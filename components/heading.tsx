@@ -19,7 +19,7 @@ const Heading: React.FC<HeadingProps> = ({
     return (
 
         <div className="flex items-center px-4 mb-8 lg:px-8 gap-x-3">
-            <div className={cn('p-2 w-fit rounded-md', iconColor)}>
+            <div className={cn('p-2 w-fit rounded-md', bgColor)}>
                 <Icon className={cn('w-10 h-10', iconColor)} />
             </div>
             <div>
