@@ -1,7 +1,7 @@
 'use client';
 
 import Heading from "@/components/heading";
-import { Code } from "lucide-react";
+import { Music } from "lucide-react";
 import { useForm } from "react-hook-form";
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,22 +11,18 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ChatCompletionRequestMessage } from "openai";
 import axios from "axios";
 import Empty from "@/components/empty";
 import Loader from "@/components/loader";
-import { cn } from "@/lib/utils";
-import UserAvatar from "@/components/user-avatar";
-import BotAvatar from "@/components/bot-avatar";
-import ReactMarkdown from 'react-markdown';
 import useProModal from "@/hooks/use-pro-modal";
 import { toast } from "react-hot-toast";
 
-const CodePage = () => {
+
+const MusicPage = () => {
 
     const router = useRouter();
     const proModal = useProModal();
-    const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
+    const [music, setMusic] = useState<string>();
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -39,16 +35,10 @@ const CodePage = () => {
 
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
         try {
-            const userMessage: ChatCompletionRequestMessage = {
-                role: 'user',
-                content: data.prompt
-            };
-            const newMessages = [...messages, userMessage];
+            setMusic(undefined);
 
-            const response = await axios.post('/api/code', {
-                messages: newMessages
-            });
-            setMessages((curr) => [...curr, userMessage, response.data]);
+            const response = await axios.post('/api/music', data);
+            setMusic(response.data.audio);
             form.reset();
         } catch (e: any) {
             if (e?.response?.status === 403) {
@@ -65,11 +55,11 @@ const CodePage = () => {
     return (
         <div>
             <Heading
-                title="Code Generation"
-                description="Generate code using descriptive text"
-                icon={Code}
-                iconColor="text-green-700"
-                bgColor="bg-green-700/10" />
+                title="Music Generation"
+                description="Turn your prompt into music"
+                icon={Music}
+                iconColor="text-emerald-500"
+                bgColor="bg-emerald-500/10" />
 
             <div className="px-4 lg:px-8">
                 <div>
@@ -86,7 +76,7 @@ const CodePage = () => {
                                             <Input
                                                 className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
                                                 disabled={isLoading}
-                                                placeholder='Simple toggle button using react hooks'
+                                                placeholder='Piano solo'
                                                 {...field} />
                                         </FormControl>
                                     </FormItem>
@@ -105,42 +95,18 @@ const CodePage = () => {
                             <Loader />
                         </div>
                     )}
-                    {messages.length === 0 && !isLoading && (
-                        <Empty label="No conversation started" />
+                    {!music && !isLoading && (
+                        <Empty label="No music generated" />
                     )}
-                    <div className="flex flex-col-reverse gap-y-4">
-                        {messages.map((message) => (
-                            <div
-                                key={message.content}
-                                className={cn(
-                                    'p-8 w-full flex items-start gap-x-8 rounded-lg',
-                                    message.role === 'user' ? 'bg-white border border-black/10' : 'bg-muted')}>
-                                {message.role === 'user' ? (
-                                    <UserAvatar />
-                                ) : (
-                                    <BotAvatar />
-                                )}
-                                <ReactMarkdown
-                                    className="overflow-hidden text-sm leading-7"
-                                    components={{
-                                        pre: ({ node, ...props }) => (
-                                            <div className="w-full p-2 my-2 overflow-auto rounded-lg bg-black/10">
-                                                <pre {...props} />
-                                            </div>
-                                        ),
-                                        code: ({ node, ...props }) => (
-                                            <code className="p-1 rounded-lg bg-black/10" {...props} />
-                                        )
-                                    }}>
-                                    {message.content || ''}
-                                </ReactMarkdown>
-                            </div>
-                        ))}
-                    </div>
+                    {music && (
+                        <audio controls className="w-full mt-8">
+                            <source src={music} />
+                        </audio>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
 
-export default CodePage;
+export default MusicPage;

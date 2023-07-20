@@ -21,10 +21,13 @@ import BotAvatar from "@/components/bot-avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardFooter } from "@/components/ui/card";
 import Image from "next/image";
+import useProModal from "@/hooks/use-pro-modal";
+import { toast } from "react-hot-toast";
 
 const ImagePage = () => {
 
     const router = useRouter();
+    const proModal = useProModal();
     const [images, setImages] = useState<string[]>([]);
 
 
@@ -50,8 +53,11 @@ const ImagePage = () => {
             setImages(urls);
             form.reset();
         } catch (e: any) {
-            // TODO: open pro modal
-            console.log(e);
+            if (e?.response?.status === 403) {
+                proModal.onOpen();
+            } else {
+                toast.error('Something went wrong');
+            }
         } finally {
             router.refresh();
         }

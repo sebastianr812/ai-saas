@@ -1,32 +1,28 @@
 'use client';
 
 import Heading from "@/components/heading";
-import { Code } from "lucide-react";
+import { VideoIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { formSchema } from "./constants";
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ChatCompletionRequestMessage } from "openai";
 import axios from "axios";
 import Empty from "@/components/empty";
 import Loader from "@/components/loader";
-import { cn } from "@/lib/utils";
-import UserAvatar from "@/components/user-avatar";
-import BotAvatar from "@/components/bot-avatar";
-import ReactMarkdown from 'react-markdown';
 import useProModal from "@/hooks/use-pro-modal";
 import { toast } from "react-hot-toast";
 
-const CodePage = () => {
+
+const VideoPage = () => {
 
     const router = useRouter();
     const proModal = useProModal();
-    const [messages, setMessages] = useState<ChatCompletionRequestMessage[]>([]);
+    const [video, setVideo] = useState<string>();
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -39,16 +35,10 @@ const CodePage = () => {
 
     const onSubmit = async (data: z.infer<typeof formSchema>) => {
         try {
-            const userMessage: ChatCompletionRequestMessage = {
-                role: 'user',
-                content: data.prompt
-            };
-            const newMessages = [...messages, userMessage];
+            setVideo(undefined);
 
-            const response = await axios.post('/api/code', {
-                messages: newMessages
-            });
-            setMessages((curr) => [...curr, userMessage, response.data]);
+            const response = await axios.post('/api/video', data);
+            setVideo(response.data[0]);
             form.reset();
         } catch (e: any) {
             if (e?.response?.status === 403) {
@@ -65,11 +55,11 @@ const CodePage = () => {
     return (
         <div>
             <Heading
-                title="Code Generation"
-                description="Generate code using descriptive text"
-                icon={Code}
-                iconColor="text-green-700"
-                bgColor="bg-green-700/10" />
+                title="Video Generation"
+                description="Turn your prompt into video"
+                icon={VideoIcon}
+                iconColor="text-orange-700"
+                bgColor="bg-orange-700/10" />
 
             <div className="px-4 lg:px-8">
                 <div>
@@ -86,7 +76,7 @@ const CodePage = () => {
                                             <Input
                                                 className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
                                                 disabled={isLoading}
-                                                placeholder='Simple toggle button using react hooks'
+                                                placeholder='Clown fish swimming around a coral reef'
                                                 {...field} />
                                         </FormControl>
                                     </FormItem>
@@ -105,42 +95,18 @@ const CodePage = () => {
                             <Loader />
                         </div>
                     )}
-                    {messages.length === 0 && !isLoading && (
-                        <Empty label="No conversation started" />
+                    {!video && !isLoading && (
+                        <Empty label="No video generated" />
                     )}
-                    <div className="flex flex-col-reverse gap-y-4">
-                        {messages.map((message) => (
-                            <div
-                                key={message.content}
-                                className={cn(
-                                    'p-8 w-full flex items-start gap-x-8 rounded-lg',
-                                    message.role === 'user' ? 'bg-white border border-black/10' : 'bg-muted')}>
-                                {message.role === 'user' ? (
-                                    <UserAvatar />
-                                ) : (
-                                    <BotAvatar />
-                                )}
-                                <ReactMarkdown
-                                    className="overflow-hidden text-sm leading-7"
-                                    components={{
-                                        pre: ({ node, ...props }) => (
-                                            <div className="w-full p-2 my-2 overflow-auto rounded-lg bg-black/10">
-                                                <pre {...props} />
-                                            </div>
-                                        ),
-                                        code: ({ node, ...props }) => (
-                                            <code className="p-1 rounded-lg bg-black/10" {...props} />
-                                        )
-                                    }}>
-                                    {message.content || ''}
-                                </ReactMarkdown>
-                            </div>
-                        ))}
-                    </div>
+                    {video && (
+                        <video className="w-full mt-8 bg-black border rounded-lg aspect-video" controls>
+                            <source src={video} />
+                        </video>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
 
-export default CodePage;
+export default VideoPage;
